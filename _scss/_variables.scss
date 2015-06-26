@@ -1,0 +1,31 @@
+
+//
+// VARIABLES
+//
+
+// Colors
+$blue: #4183C4; 
+
+// Grays
+$black: #000;
+$darkerGray: rgba(0, 0, 0, 0.8);;
+$darkGray: #333;
+$gray: #666;
+$lightGray: #fafafa;
+$white: #fff;
+
+// Font stacks
+$helvetica: "freight-text-pro",sans-serif;
+$helveticaNeue: "freight-text-pro",sans-serif;
+$georgia: Georgia, serif;
+
+// Mobile breakpoints
+@mixin mobile {
+  @media screen and (max-width: 640px) {
+    @content;
+  }
+}
+
+h3 {
+	text-align: center;
+}

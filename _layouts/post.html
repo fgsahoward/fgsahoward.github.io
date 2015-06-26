@@ -1,0 +1,32 @@
+---
+layout: default
+---
+
+<article class="post">
+	<div class="date">
+  	{{ page.date | date: "%e %B, %Y" }}
+	</div>
+  <h1>{{ page.title }}</h1>
+
+  <div class="entry">
+  	<strong>by <em>{{ page.author }}</em></strong>
+    {{ content }}
+  </div>
+
+
+<!--  {% include disqus.html disqus_identifier=page.disqus_identifier %} -->
+
+ </article>
+
+{% if page.previous %}
+	<hr>
+	<p class="text-center">
+		<strong>Prev:</strong>
+	</p>
+		<a class="previous-article" href="{{ site.baseurl }}{{ page.previous.url }}">
+			<img src="{{ site.baseurl }}{{ page.previous.image }}" alt="">
+			<h3>{{ page.previous.title }}</h3>
+		<div class="previous-overlay">
+		</div>
+		</a>
+{% endif %}
