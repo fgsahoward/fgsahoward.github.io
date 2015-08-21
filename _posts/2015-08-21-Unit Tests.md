@@ -1,0 +1,21 @@
+---
+layout: post
+title: On Unit Tests
+image: /images/08-21-2015-Unit-Tests/vader.png
+author: Christopher Thomas
+excerpt: Unit Tests are at the core of a craftsman's approach to software development; this is how we write ours
+---
+
+![Cover]({{ site.baseurl }}/images/08-21-2015-Unit-Tests/vader.png "Darth Vader Wants You To Write Tests") 
+
+As a proponent of the software craftsmanship movement, FoxGuard talks a lot about unit testing.  We write all of our code to be as testable as possible and we hold fast in our insistance that untested code is incomplete code. Unfortunately, these ideas are often novel to developers when we first meet them and many development shops either don't use unit testing or fail to make it a priority in their development process. We hold that unit tests are key to a craftsman's approach to software development. They give us confidence in our code and in our ability to change it without unexpected consequences. To do that, however, unit tests have to be written well.  This is how we write ours.
+
+1. **Unit tests should be run automatically.** FoxGuard encourages developers to run tests locally but we automate testing on our build server.  Before code can even be considered for integration into the main trunk it has to merge and pass tests, thereby ensuring that each developer's contribution adheres to the expected functionality described by the test suite.
+2. **Unit tests should cover your code.** Tests serve to tell developers both *that* things are working and *how* they are supposed to work. Even areas of your code in which we've never had problems have unit tests that cover them.  Those tests  serve as the canary in the coal mine when that previously working code - code which no one has touched in years, perhaps - suddenly stops working. That helps us to respond quickly to issues and figure out what to do something breaks. Obviously 100% coverage, while the ideal, is a high -- if not impossible -- mark to hit.  About 80% coverage hits the vast majority of testable code but improvement is always possible. 
+3. **Unit tests should be independent.** A unit test exists in a vacuum; it can be run regardless of the other tests which might be run and does not depend on other tests to set up or tear down preconditions for its run.  In this way we prevent making our tests fragile.  While we spend a lot of time writing tests, it is not an end unto itself; independent tests are tests that you can write fast and understand at a glance. 
+
+By doing those things unit tests serve as a kind of canary in the coal mine; we know if something is broken when the unit tests fail. Knowing what is broken requires not just a good suite of unit tests but tests that are individually good as well.
+
+1. **A good unit test is fast.** Fast tests are tests that developers will run. Slow tests will get ignored and there's no point in writing tests if you're not going to run them.  This means that test cases should take care to avoid large collections, unwieldy mocks, and slow resources.  By doing as much in memory as possible and offloading file system and  database interactions to integration tests, unit tests can execute quickly and efficiently.  
+2. **A good unit test is well named.** A test with a good name tells the developer exactly what is broken when it fails without requiring her to open the code. At the same time, remember that the test file is part of the documentation of your code; it needs to be readable in and of itself.  That means that extraordinarily verbose names, while helpful in a failed-tests report, aren't as easy to navigate and use as short and terse ones. Good unit tests strike a balance between these two extremes.
+3. **A good unit test tests exactly one thing.** That doesn't mean that it has to contain exactly one "assert" statement though that's a good rule of thumb, but exactly one logical concept should be covered per test.  Doing this means that each logical step in your code has a test that covers it and each logical test has a single logical chunk of code that can break it; thus, when the test fails, there's no need to go stepping through the test suite in the debugger to work out what went wrong.
