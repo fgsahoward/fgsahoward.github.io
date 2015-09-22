@@ -18,7 +18,9 @@ I was refactoring some PUMP portal code the other day, when I came across (somet
         …
     }
 ```
+
 My goal was to change this into something constructor injected, (so our DI container could start managing it), which would kind of look like this:
+
 ```csharp
     public abstract class BaseController : Controller
     {
@@ -37,10 +39,12 @@ My goal was to change this into something constructor injected, (so our DI conta
         …
     }
 ```
+
 Unfortunately, this would mean modifying all of our derived controllers to include this constructor parameter, for a dependency that they wouldn't directly rely on.
 It just wasn't clean enough for our standards, so I decided to put this option on the back-burner.
 
 "Wait… I know, property injection! We use Ninject, so we can just do this:"
+
 ```csharp
     public abstract class BaseController : Controller
     {
@@ -55,6 +59,7 @@ It just wasn't clean enough for our standards, so I decided to put this option o
         …
     }
 ```
+
 ![Cover]({{ site.baseurl }}/images/09-28-2015-Property-Injection-The-Hard-Way-With-Ninject/BatmanSlap-PropertyInjectionByAttribute.jpg "Batman is tired of seeing `[Inject]` everywhere.") 
 
 Unfortunately, I find the marker attribute for property injection to be a bit distasteful.
@@ -64,6 +69,7 @@ This can be alleviated a little by using a custom marker attribute (other than `
 Maybe we can do better?
 
 Usually, when working on the PUMP portal, if we are forced to do property injection (by a 3rd party component), we do it at the place where the binding is defined, in a Ninject module, like this:
+
 ```csharp
     public class SomeModule : NinjectModule
     {
@@ -76,6 +82,7 @@ Usually, when working on the PUMP portal, if we are forced to do property inject
         }
     }
 ```
+
 This gives us the benefit of having all of our construction logic kept to the scope of our dependency injection container's configuration.
 However, you can't do this with a base controller type, because reasons.
 (What would you bind your base controller to? Would you want to start manually binding/rebinding your controllers?)
@@ -86,6 +93,7 @@ So as I was pondering this, I remembered that Ninject is architected "pretty wel
 My imagination was rushing with all of the arcane objects and collections I might have to poke at - but I managed to clench down and open up [`PropertyReflectionStrategy`](https://github.com/ninject/Ninject/blob/ff2e7b9c53f948ce405eaba8c3bebf2d1e48cb00/src/Ninject/Planning/Strategies/PropertyReflectionStrategy.cs) hoping to find something I could copy+paste as starter code for writing my own strategy.
 
 This is what I found, (minus XML docs):
+
 ```csharp
     public class PropertyReflectionStrategy : NinjectComponent, IPlanningStrategy
     {
@@ -106,12 +114,14 @@ This is what I found, (minus XML docs):
         }
     }
 ```
+
 It was so incredibly clean, I actually groaned _louder_.
 I didn't know what this `ISelector` was, but I dreaded the thought of having to re-implement it.
 Clearly it was Beowulf, hidden in the eldritch depths of Ninject.
 (As I came to see, my previous experiences with extending Ninject had biased me.)
 
 So I dove deeper, finding Ninject's sole [implementation](https://github.com/ninject/Ninject/blob/f3dbc59afbb1f212608803eb50bc1f7ba0aa0702/src/Ninject/Selection/Selector.cs) of the interface, and my eyes immediately jumped to the method that was used back in `PropertyReflectionStrategy`:
+
 ```csharp
 		public virtual IEnumerable<PropertyInfo> SelectPropertiesForInjection(Type type)
 		{
@@ -134,9 +144,11 @@ So I dove deeper, finding Ninject's sole [implementation](https://github.com/nin
 		    return properties;
 		}
 ```
+
 When I realized that Ninject was literally searching all properties, of all injected things, and looping through a quite possibly dynamic list of "heuristics" to filter said properties, my sigh of relief was audible. 
 My random jaunt through the code actually led me to Ninject's implementation of the exact behavior I was trying to extend. Clearly `this.InjectionHeuristics`, a collection of `IInjectHeuristic` was what mattered. 
 Once again, Ninject had only one [implementation](https://github.com/ninject/Ninject/blob/cc00946b1484db3c8d1c80c0c44e91beabc6b5be/src/Ninject/Selection/Heuristics/StandardInjectionHeuristic.cs), so I opened it up: 
+
 ```csharp
     public class StandardInjectionHeuristic : NinjectComponent, IInjectionHeuristic
     {
@@ -162,6 +174,7 @@ Once again, Ninject had only one [implementation](https://github.com/ninject/Nin
         }
     }
 ```
+
 Seeing the usage of something called `Settings.InjectAttribute`, at this point I remembered that the marker attribute one uses for property injection _is configurable_ in Ninject.
 I briefly reconsidered using marker attributes, (but using a custom one), and was still leaning toward marker attributes not being a good fit.
 This would have meant introducing a low level concept to our architecture that would be inherently related to dependency injection, when right now our dependency injection sits at a high level, (hovering above like a puppeteer).
@@ -171,6 +184,7 @@ I had seen parts of Ninject do this in the past, and I knew that Ninject managed
 I had a hunch - that I could write one of _these_ heuristic _things_, instead of a strategy, and register it with `IKernel.Components` directly, thereby introducing my _own_ injection heuristic.
 
 I certainly couldn't write one that only cared about my `TempDataProviderFactory` property; I needed something more reusable, and wound up with this:
+
 ```csharp
     public class WellKnownMemberInjectionHeuristic : NinjectComponent, IInjectionHeuristic
     {
@@ -198,7 +212,9 @@ I certainly couldn't write one that only cared about my `TempDataProviderFactory
         #endregion
     }
 ```
+
 Then I just needed some helper methods to keep my colleagues from having to handle this thing raw, and keep my consuming Ninject module clean:
+
 ```csharp
     public static class KernelExtensions
     {
@@ -227,7 +243,9 @@ Then I just needed some helper methods to keep my colleagues from having to hand
         }
     }
 ```
+
 Finally, it was ready for use:
+
 ```csharp
     public class SomeModule : NinjectModule
     {
@@ -239,6 +257,7 @@ Finally, it was ready for use:
         }
     }
 ```
+
 And it actually works - with _far_ less code than what I initially surmised.
 
 I wouldn't regard this as "the" optimal solution for everyone - but we are devotees of clean code here at FoxGuard Solutions.
