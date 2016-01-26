@@ -19,14 +19,14 @@ html {
 
 body {
 	background: $white;
-  font: 19px/1.2 $helvetica;
+  font: 16px/1.2 $helvetica;
   color: $darkGray;
   -webkit-font-smoothing: antialiased;
 }
 
 .container {
   margin: 0 auto;
-  max-width: 740px;
+  max-width: 1000px;
   padding: 0 10px;
   width: 100%;
 }
@@ -74,7 +74,7 @@ h4 {
 
 p {
   margin: 1em 0;
-  line-height: 33px;
+  line-height: 120%;
   letter-spacing: 0.159999996423721px;
   color: rgba(0, 0, 0, 0.8);
 }
