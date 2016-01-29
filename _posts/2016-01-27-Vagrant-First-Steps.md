@@ -8,15 +8,15 @@ excerpt: Ultimately looking to automate test environment & build slave spin-up, 
 Attempting to broaden our horizons a little bit, a few of us settled down at [CoP](https://en.wikipedia.org/wiki/Community_of_practice "Wikipedia: Community of Practice") the other day to play with [Vagrant](https://www.vagrantup.com/).
 
 Ultimately looking to automate test environment & build slave spin-up, we had a few constraints that made things complicated:
-- We needed to run Windows Server Core guest OSes, (we use a lot of the Microsoft stack, and Server Core is small and made for remote/console config.)
-- We needed to use Hyper-V for hosting, (we have Hyper-V resources in-house to leverage.)
-- We wanted to use [Chef](https://www.chef.io/chef/) (because it seems like that's what people "do".)
+	- We needed to run Windows Server Core guest OSes, (we use a lot of the Microsoft stack, and Server Core is small and made for remote/console config.)
+	- We needed to use Hyper-V for hosting, (we have Hyper-V resources in-house to leverage.)
+	- We wanted to use [Chef](https://www.chef.io/chef/) (because it seems like that's what people "do".)
 
 After trying Vagrant `box` after `box`, we met little success finding a pre-built combination of the above three that either worked or was from a trustworthy source. It felt to me like we were trying to attack this technology stack from the middle, so we decided to spend some time on a different approach: building a Windows `box` from scratch. We ran into even more snags, so keep reading if you plan on dipping your toes in this water.
 
 The official documentation is a good place to start, albeit terse in the practicality department:
-- [Vagrant: Hyper-V: Creating A Base Box](https://docs.vagrantup.com/v2/hyperv/boxes.html)
-- which leads you to the slightly more generalized [Vagrant: Creating A Base Box](https://docs.vagrantup.com/v2/boxes/base.html)
+	- [Vagrant: Hyper-V: Creating A Base Box](https://docs.vagrantup.com/v2/hyperv/boxes.html)
+	- which leads you to the slightly more generalized [Vagrant: Creating A Base Box](https://docs.vagrantup.com/v2/boxes/base.html)
 
 From my novice understanding, if we wanted to do this "fer srs", we should probably use something like [Packer](https://www.packer.io/intro/index.html), along with a toolkit+guide like [this one](https://github.com/joefitzgerald/packer-windows "GitHub: joefitzgerald/packer-windows"). However, this doesn't address our need to learn about what goes "into" a `box`, and a small [scavenger](https://github.com/MSOpenTech/packer-hyperv/issues/18 "defunct Packer + Hyper-V effort") [hunt](https://github.com/pbolduc/packer-hyperv/ "another defunct Packer + Hyper-V effort") shows that Packer + Hyper-V don't play well together [yet](https://github.com/mitchellh/packer/pull/2576 "terrifyingly large pull request to Packer, adding Hyper-V support"). So we set out to do it the old-fashioned way.
 
@@ -46,7 +46,7 @@ From my novice understanding, if we wanted to do this "fer srs", we should proba
 	- `winrm set winrm/config/service/auth @{Basic="true"}`
 	- `sc config WinRM start= auto`
   
-  NOTE: We'll repeat a couple of Vagrant's pieces of advice here:
+	NOTE: We'll repeat a couple of Vagrant's pieces of advice here:
 	- Use the "Windows command prompt" for the above - _not_ _PowerShell_.
 	- The above steps purposefully create some security holes - make sure you plug them before going to production.
 
