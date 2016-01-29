@@ -8,6 +8,7 @@ excerpt: Ultimately looking to automate test environment & build slave spin-up, 
 Attempting to broaden our horizons a little bit, a few of us settled down at [CoP](https://en.wikipedia.org/wiki/Community_of_practice "Wikipedia: Community of Practice") the other day to play with [Vagrant](https://www.vagrantup.com/).
 
 Ultimately looking to automate test environment & build slave spin-up, we had a few constraints that made things complicated:
+
 	- We needed to run Windows Server Core guest OSes, (we use a lot of the Microsoft stack, and Server Core is small and made for remote/console config.)
 	- We needed to use Hyper-V for hosting, (we have Hyper-V resources in-house to leverage.)
 	- We wanted to use [Chef](https://www.chef.io/chef/) (because it seems like that's what people "do".)
@@ -15,6 +16,7 @@ Ultimately looking to automate test environment & build slave spin-up, we had a 
 After trying Vagrant `box` after `box`, we met little success finding a pre-built combination of the above three that either worked or was from a trustworthy source. It felt to me like we were trying to attack this technology stack from the middle, so we decided to spend some time on a different approach: building a Windows `box` from scratch. We ran into even more snags, so keep reading if you plan on dipping your toes in this water.
 
 The official documentation is a good place to start, albeit terse in the practicality department:
+
 	- [Vagrant: Hyper-V: Creating A Base Box](https://docs.vagrantup.com/v2/hyperv/boxes.html)
 	- which leads you to the slightly more generalized [Vagrant: Creating A Base Box](https://docs.vagrantup.com/v2/boxes/base.html)
 
