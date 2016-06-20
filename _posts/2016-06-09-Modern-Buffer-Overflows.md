@@ -30,7 +30,7 @@ On x86 processors the stack always grows from higher memory addresses to lower m
 
 Through the lifetime of a function `%ebp` should never change, it points to the first value pushed onto the stack when that function was entered. When a new function is called the function prolog will push the current value of `%ebp` onto the stack (directly below the last function's stack frame), and then copy the current value of `%esp` into `%ebp`. That looks like this:
 
-```asm
+```
 foo:
     # Begin function prolog
     push %ebp
@@ -43,7 +43,7 @@ This ensures that when the function returns, it is capable of restoring the call
 
 As mentioned above, the callee function is responsible for restoring the caller's stack frame, this is handled by the function epilog:
 
-```asm
+```
     ...
     pop %ebp
     ret
@@ -114,7 +114,7 @@ After Function1 returns:
 The following will look at a program that is susceptible to a buffer overflow and examine the stack and registers as the overflow occurs. The program below will demonstrate all the knowledge gained from above, by executing the program in the GNU Debugger (gdb).
 
 
-```C
+```c
 /** Easily exploitable Buffer Overflow for learning purposes
  *
  * Compilation:
