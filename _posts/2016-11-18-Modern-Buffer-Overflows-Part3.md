@@ -14,7 +14,7 @@ shellcode writing and used the product to exploit the vulnerability examined in
 Part I. For the exploit in Part II to work several protections were turned off,
 namely, Address Space Layout Randomization (ASLR), the no-execute bit (NX Bit),
 and the stack canary. While there may be a few legitimate reasons to turn any
-one of these protections off, the mass majority of executables in the wild will
+one of these protections off, the vast majority of executables in the wild will
 have (almost) all of them turned on by default. This post dives into the NX Bit
 and how it can be overcome using some more modern exploitation techniques.
 
@@ -23,7 +23,7 @@ and how it can be overcome using some more modern exploitation techniques.
 Part II left off after having exploited the buffer overflow examined in Part I.
 This exploit was accomplished by:
 
- * Extracting executable binary instruction from a compiled object file (AKA
+ * Extracting executable binary instructions from a compiled object file (AKA
    shellcode).
  * Writing the shellcode into the vulnerable application's memory space,
    specifically on the stack.
@@ -39,11 +39,11 @@ read, write, and execute permissions to the memory region mapped to the stack.
 In Linux, every file as well as every memory region of a program has file
 permissions. The most common of the permissions determine whether a read, write,
 or execute operation is permitted on the file or memory region. In modern
-applications under normal circumstances any particular memory region is mapped
+applications, under normal circumstances, any particular memory region is mapped
 either read/execute or read/write, but never all three. In Part I the vulnerable
 application that was exploited in Part II was compiled with the `-z execstack`
 flag. This enables the execute permission on the memory region mapped to the
-stack, and because it is the stack (a data storage area) it is already marked
+stack, and, because it is the stack (a data storage area), it is already marked
 read/write.
 
 The no-execute bit (NX Bit) is a reference to the executable permission being
@@ -81,20 +81,30 @@ ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0 [vsyscall]
 
 The maps file of any process lists all the memory regions mapped to a process,
 the address to which the region is mapped, and the permissions it is mapped
-with. The next to last line of this output shows the memory region mapped to the
+with. The next-to-last line of this output shows the memory region mapped to the
 stack. In this case, the stack is mapped with `rw-p` permissions. This is the
 normal case and means the memory has been allocated with read and write private
-permissions. The private in this case refers to a copy-on-write operation which
+permissions. The "private" in this case refers to a copy-on-write operation which
 is a memory saving technique outside the scope of this article. The program that
 was exploited in Part II would have had this memory region mapped `rwxp` which
 is what allowed data to be executed as if it were normal instructions.
+
+More information on the maps file is available on the [proc manual
+page](http://man7.org/linux/man-pages/man5/proc.5.html). 
+
+More information on the "private" flag can be gained from the 
+[mmap manual page](http://man7.org/linux/man-pages/man2/mmap.2.html).
+
+More information on copy-on-write in the [blog series by Ville
+Laurikari](http://hackerboss.com/copy-on-write-101-part-1-what-is-it/).
+
 
 ## Flipping The NX Bit ##
 
 Given that most modern applications have no reason to have the no execute bit
 turned off, what needs to be done to overcome this protection? Revisiting the
-technique used in Part II the only step that no longer works is executing the
-attacker written instructions. Seeing that no one memory location can be both
+technique used in Part II, the only step that no longer works is executing the
+attacker written instructions. Seeing as no one memory location can be both
 executed from and written to, there is little room to reuse the same techniques
 from before.
 
@@ -105,7 +115,7 @@ any hope of executing them, why not use the instructions that are already there?
 Part II focused mainly on calling the `execve` system call from assembly, which
 gave full control over the target's stack. If the C equivalent of `execve` were
 already available in the target application then it would be the perfect return
-address, given the arguments to it could be controlled.
+address -- if the arguments to it could be controlled.
 
 The x86 32-bit C Application Binary Interface (ABI) specifies that arguments to
 functions are to be passed in reverse order on the stack. This means that if a
@@ -115,7 +125,7 @@ func`.
 
 Given this information it sounds like the arguments can be controlled by
 writing them to the stack above the saved instruction pointer. This new exploit
-will still need an address to return to, which `execve` would be most
+will still need an address to return to, and `execve` could be most
 desireable, if we can manage to get that function into the processes' address
 space.
 
@@ -130,7 +140,7 @@ this conclusion and thus birthed the technique known as Return To libc
 (ret2libc).
 
 Return to libc works because before the loader starts executing a program it
-load the ELF (executable and linkable format) executable into memory. The ELF
+loads the ELF (executable and linkable format) executable into memory. The ELF
 contains information including all the instructions of the program itself, as
 well as the names and locations of any shared objects (SOs) it was linked
 against. The loader then follows all links for all SOs and loads them into
@@ -250,10 +260,11 @@ Breakpoint 1, 0x08048504 in main ()
 (gdb)
 ```
 
-The program must be running inside the debugger before the SOs are loaded into
-its' memory space, and indeed before it even has a memory space; this is the
-reason that a breakpoint is set at main and program started before inspecting
-the memory. The debugger confirms that the `execve` call starts at the address
+When first loading the program, the debugger will only load the ELF and
+statically linked libraries into memory. It is not until the program is running
+that the loader will load the shared objects into memory. For this reason, a
+breakpoint is set at main and the program is started before inspecting the
+memory. The debugger confirms that the `execve` call starts at the address
 `0xf7eac7c0`, yielding the return address needed to complete the exploit. The
 first few lines of `execve` show it loading the arguments from the stack, recall
 the signature: `int execve(const char *path, char *const argv[], char *const
@@ -361,7 +372,7 @@ $ rm -f /tmp/f; mkfifo /tmp/f
 $ cat /tmp/f | /bin/sh -i 2>&1 | nc -l 127.0.0.1 1234 > /tmp/f
 ```
 
-The mkfifo command simply creates a named pipe, think of it sort of like
+The mkfifo command simply creates a named pipe; think of it sort of like
 creating a file that represents standard in or standard out. In this case, the
 named pipe can be read from and written to. The usage of the cat command in the
 example takes all the contents of `/tmp/f` and outputs it to standard out. Using
@@ -468,8 +479,8 @@ if __name__ == '__main__':
 ```
 
 The program starts by creating the same exploit string we initially piped into a
-file, adjusting the addresses for correctness. Next it opens a socket and reads
-out the initial output from the vulnerable program. Finally it sends the exploit
+file, adjusting the addresses for correctness. Next, it opens a socket and reads
+out the initial output from the vulnerable program. Finally, it sends the exploit
 which should result in a new shell, after which it waits for user input to pipe
 across the network to the shell. Now the the exploit has been codified,
 exploitation is as simple as shown:
@@ -504,10 +515,11 @@ All the fundamentals that made the return to libc attack successful in the last
 section, still hold true in the 64-bit exploit. This time around, however, the
 arguments need to be passed via registers rather than the stack. The easiest way
 to get values into registers is to simply pop them off the stack into the
-appropriate register and continue on with the rest of the instructions. Return
-Oriented Programming (or ROP) is the art of finding small instructions sets
-within a program which do just that. The small instruction sets, which are
-generally just a portion of an actual subroutine, used in ROP are generally
+appropriate register and continue on with the rest of the instructions. [Return
+Oriented Programming](https://en.wikipedia.org/wiki/Return-oriented_programming)
+(or ROP) is the art of finding small instructions sets
+within a program which do just that. The small instruction sets, which are 
+just a portion of an actual subroutine, used in ROP are often
 refered to as gadgets. Particularly, before returning to the `execve` function,
 the registers `%rdi`, `%rsi`, and `%rdx` need to be filled with argv[0], argv,
 and envp respectively. Any set of gadgets that accomplish popping the values
@@ -563,9 +575,9 @@ command. The shell's basic functionality can work just fine without this, so
 there is no use going out of the way to properly set it. For this exploit, it
 can safely be ignored.
 
-The address of the gadgets is given as the first column. Theoretically after the
-buffer overflow the stack should be set up to return to one of these gadgets 
-where its' popped value sets on top. On top of the popped value is the other 
+The address of the gadgets is given as the first column. Theoretically, after the
+buffer overflow, the stack should be set up to return to one of these gadgets 
+where its popped value sets on top. On top of the popped value is the other 
 gadget's address followed by its' popped value, finally followed by the address
 for `execve`. To put this all in motion, first figure out the return address for
 `execve` as well as the pointers to the arguments:
@@ -636,7 +648,7 @@ gs             0x0              0
 This shows the addresses of the first two arguments to `execve`, `argv[0]`
 (`0x7fffffffec46`) and `argv` (`0x7fffffffe9a0`). These will need to be adjusted
 for the environment outside of the debugger, but give a good place to start
-looking in the live environment. Just as in the 32-bit version start the program
+looking in the live environment. Just as in the 32-bit version, start the program
 with input and output attached through a pipe to netcat, then attach to the
 process with gdb.
 
@@ -727,9 +739,9 @@ value off the stack into `%rdi` which should hold the address of `argv[0]`.
 Directly above that is the pointer to `argv[0]` because this is where `%rsp`
 will pointing when the pop instruction executes. Directly above `argv[0]` on our
 fabricated stack is the address to the next pop instruction. Since this gadget
-pops two values `%rsi` and `%r15` there needs to be two values to pop off the
+pops two values -- `%rsi` and `%r15` -- there need to be two values to pop off the
 stack. This exploit does not care what the value of `%r15` is, so any value will
-do, in this case it has been set to all zeros. Finally the stack and registers
+do; in this case it has been set to all zeros. Finally the stack and registers
 have been setup appropriately and the pointer to `execve` is the last return
 address on the stack.
 
